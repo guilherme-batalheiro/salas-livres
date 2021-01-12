@@ -1,56 +1,39 @@
 """
 	Guilherme Batalheiro
-	01/01/2021
+	12/01/2021
 	Free Class Rooms
 
 	IMPORTED LIBS:
 		requests
 """
 
+import ast
 import requests
 
 from datetime import datetime
 
 fenix_api = "https://fenix.tecnico.ulisboa.pt/api/fenix/v1/"
-fenix_api_space = fenix_api + "spaces/" 
+fenix_api_space = fenix_api + "spaces/"
 
-rooms = {
-	"0 - 16": "2448131365167",
-	"0 - 32": "2448131373043",
-	"0 - 71": "2448131373038",
-	"0 - 73": "2448131373039",
-	"0 - 75": "2448131373037",
-	"0 - 13": "2448131365126",
-	"0 - 15": "2448131365127",
-	"0 - 17": "2448131365128",
-	"0 - 19": "2448131365129",
-	"0 - 21": "2448131365130",
-	"0 - 23": "2448131365131",
-	"0 - 25": "2448131365132",
-	"0 - 27": "2448131365133",
-	"0 - 5": "2448131365116",
-	"0 - 9": "2448131365119",
-	"A1": "2448131365113",
-	"A2": "2448131365117",
-	"A3": "2448131365134",
-	"A4": "2448131365135",
-	"A5": "2448131365136",
-	"1 - 4.8": "2448131365243",
-	"1 - 75": "2448131365299",
-	"1 - 60": "2448131373040",
-	"1 - 62": "2448131373041",
-	"1 - 64": "2448131373042",
-	"1 - 1": "2448131365194",
-	"1 - 11": "2448131365204",
-	"1 - 2": "2448131365195",
-	"1 - 17": "2448131365221",
-	"1 - 19": "2448131365222",
-	"1 - 22": "2448131365224",
-	"1 - 24": "2448131365225",
-	"1 - 3": "2448131365196",
-	"1 - 4": "2448131365197",
-	"2 - N 8.2": "2448131365407"
-}
+file = open("rooms.txt", "r")
+contents = file.read()
+rooms = ast.literal_eval(contents)
+file.close()
+
+def api_availability():
+	try:
+		response = requests.get(fenix_api_space)
+	except Timeout:
+		return str("The request timed out!")
+	except HTTPError as http_err:
+		return str(f"HTTP error occurred: {http_err}")
+	except Exception as err:
+		return str(f"Other error occurred: {err}")
+
+	if "Serviço em Manutenção" in response.text:
+		return False
+	else:
+		return True
 
 def clean_data_room(data):
 	"""Clean the data
@@ -104,10 +87,15 @@ def free_rooms(date):
 		:param date: datetime 
 		:return:     dict
 	"""
+
+	if not(api_availability()):
+		print("Api is unavalable")
+		return
+
 	day = date.strftime("%d/%m/%Y")
 
 	time = datetime.strptime(date.strftime("%H:%M"), "%H:%M")
-	
+
 	for room in rooms.keys():
 		week_schedule = get_room_week_data(day, room)
 		if day in week_schedule:
