@@ -15,12 +15,8 @@ from datetime import datetime
 fenix_api = "https://fenix.tecnico.ulisboa.pt/api/fenix/v1/"
 fenix_api_space = fenix_api + "spaces/"
 
-file = open("rooms.txt", "r")
-contents = file.read()
-rooms = ast.literal_eval(contents)
-file.close()
-
 def api_availability():
+	#HTTP GET request
 	try:
 		response = requests.get(fenix_api_space)
 	except Timeout:
@@ -41,7 +37,9 @@ def clean_data_room(data):
 		:param data: dict
 		:return:	 dict
 	"""
+
 	clean_data = {}
+
 	for i in data:
 		if i["day"] not in clean_data:
 			clean_data[i["day"]] = [i["weekday"], {"type": i["type"], \
@@ -58,7 +56,7 @@ def get_room_week_data(day, room):
 
 		:param day:  str
 		:param room: str
-		:return:     dict
+		:return:     dict or a string
 	"""
 	#HTTP GET request
 	try:
@@ -82,19 +80,16 @@ def get_room_week_data(day, room):
 		return room_week_data
 
 def free_rooms(date):
-	"""Get free rooms
+	"""Get free rooms in specific date
 
 		:param date: datetime 
 		:return:     dict
 	"""
 
-	if not(api_availability()):
-		print("Api is unavalable")
-		return
-
 	day = date.strftime("%d/%m/%Y")
-
 	time = datetime.strptime(date.strftime("%H:%M"), "%H:%M")
+
+	results = { i: "" for i in rooms.keys()}
 
 	for room in rooms.keys():
 		week_schedule = get_room_week_data(day, room)
@@ -102,20 +97,29 @@ def free_rooms(date):
 			free = True
 			for lesson in week_schedule[day]:
 				if isinstance(lesson, dict):
-					start = datetime.strptime(lesson["start"], "%H:%M")
-					end = datetime.strptime(lesson["end"], "%H:%M")
+					start, end = datetime.strptime(lesson["start"], "%H:%M"), \
+								 datetime.strptime(lesson["end"], "%H:%M")
 					if start <= time <= end:
 						free = False
-						print(room, ": Room not free!")
+						results[room] = ": Room not free!"
 						break
 			if free:
-				print(room, ": Room free!")
-
+				results[room] = ": Room free!"
 		elif isinstance(week_schedule, str):
-			print(room, week_schedule)
+			results[room] = week_schedule
 		else:
-			print(room, ": Free all day or closed")
-	pass
+			results[room] = ": Free all day or closed"
+	return results
 
-now = datetime.now()
-free_rooms(now)
+file = open("rooms.txt", "r")
+contents = file.read()
+rooms = ast.literal_eval(contents)
+file.close()
+
+if not(api_availability()):
+	print("Api is unavalable")
+else:
+	now = datetime.now()
+	data = free_rooms(now)
+	for i in data.keys():
+		print(i, data[i]) 
