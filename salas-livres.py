@@ -14,26 +14,34 @@ from datetime import datetime
 
 fenix_api = "https://fenix.tecnico.ulisboa.pt/api/fenix/v1/"
 fenix_api_space = fenix_api + "spaces/"
-fenix_api_space_Tagus_Park = fenix_api_space + "2448131365084"
+fenix_api_space_Tagus_Park = fenix_api_space + "2448131365084"					#"2448131365084" is the id of the building TagusPark
 
 def simple_get_request(url):
+	"""Simple get request
+		
+		:param url:  str
+		:return:	 HTTP response
+	"""
 	try:
-		response = requests.get(url)
-	except Timeout:
+		response = requests.get(url, timeout=3)
+		response.raise_for_status()
+	except requests.exceptions.Timeout:
 		return str("The request timed out!")
-	except HTTPError as http_err:
+	except requests.exceptions.ConnectionError as errc:
+		return str(f"Error Connecting: {errc}")
+	except requests.exceptions.HTTPError as http_err:
 		return str(f"HTTP error occurred: {http_err}")
-	except Exception as err:
+	except requests.exceptions.RequestException as err:
 		return str(f"Other error occurred: {err}")
 	return response
 
 def get_room_id(room, floor, group):
 	"""Gets the room id
 		
-		:param room: str
+		:param room:  str
 		:param floor: str
 		:param group: str
-		:return:	 str
+		:return:	  str
 	"""
 	#HTTP GET request
 	response = simple_get_request(fenix_api_space_Tagus_Park)
@@ -47,21 +55,21 @@ def get_room_id(room, floor, group):
 						if k['name'] == room:
 							return k['id']
 						else:
-							return 'wrong room or room invalid'
+							raise ValueError('get_room_id: room argument invalid')
 				else:
-					return 'wrong group or group invalid'
+					raise ValueError('get_room_id: group argument invalid')
 		else:
-			return 'invalid floor'
+			raise ValueError('get_room_id: floor argument invalid')
 
 def api_availability():
-	"""Check the api
+	"""Check api
 		
 		:return:	 bool or str
 	"""
 	#HTTP GET request
 	response = simple_get_request(fenix_api_space)
 
-	if "Serviço em Manutenção" in response.text:
+	if "Serviço em Manutenção" in response.text or isinstance(response, str):
 		return False
 	else:
 		return True
@@ -72,7 +80,6 @@ def clean_data_room(data):
 		:param data: dict
 		:return:	 dict
 	"""
-
 	clean_data = {}
 
 	for i in data:
@@ -97,11 +104,14 @@ def get_room_week_data(day, room):
 	try:
 		response = requests.get(fenix_api_space + rooms[room], \
 								params={'day': day}, timeout = 10)
-	except Timeout:
+		response.raise_for_status()
+	except requests.exceptions.Timeout:
 		return str("The request timed out!")
-	except HTTPError as http_err:
+	except requests.exceptions.ConnectionError as errc:
+		return str(f"Error Connecting: {errc}")
+	except requests.exceptions.HTTPError as http_err:
 		return str(f"HTTP error occurred: {http_err}")
-	except Exception as err:
+	except requests.exceptions.RequestException as err:
 		return str(f"Other error occurred: {err}")
 
 	json_response = response.json()
@@ -109,13 +119,13 @@ def get_room_week_data(day, room):
 	if "error" in json_response: 
 		return str(json_response["error"] + ": " + json_response["description"])
 	elif "events" not in json_response:
-		return str(": No info :( sorry!!")
+		return str(": No info :( sorry!!! or it is closed all week.")
 	else:
 		room_week_data = clean_data_room(json_response["events"])
 		return room_week_data
 
 def free_rooms(date):
-	"""Get free rooms in specific date
+	"""Get free rooms on a specific date
 
 		:param date: datetime 
 		:return:     dict
@@ -157,4 +167,4 @@ else:
 	now = datetime.now()
 	data = free_rooms(now)
 	for i in data.keys():
-		print(i, data[i]) 
+		print(i, data[i])
