@@ -14,17 +14,52 @@ from datetime import datetime
 
 fenix_api = "https://fenix.tecnico.ulisboa.pt/api/fenix/v1/"
 fenix_api_space = fenix_api + "spaces/"
+fenix_api_space_Tagus_Park = fenix_api_space + "2448131365084"
 
-def api_availability():
-	#HTTP GET request
+def simple_get_request(url):
 	try:
-		response = requests.get(fenix_api_space)
+		response = requests.get(url)
 	except Timeout:
 		return str("The request timed out!")
 	except HTTPError as http_err:
 		return str(f"HTTP error occurred: {http_err}")
 	except Exception as err:
 		return str(f"Other error occurred: {err}")
+	return response
+
+def get_room_id(room, floor, group):
+	"""Gets the room id
+		
+		:param room: str
+		:param floor: str
+		:param group: str
+		:return:	 str
+	"""
+	#HTTP GET request
+	response = simple_get_request(fenix_api_space_Tagus_Park)
+	for i in response.json()['containedSpaces']:
+		if isinstance(floor, str) and i['name'] == floor:
+			response_1 = simple_get_request(fenix_api_space + i['id'])
+			for j in response_1.json()['containedSpaces']:
+				if isinstance(group, str) and j['name'] == group:
+					response_2 = simple_get_request(fenix_api_space + j['id'])
+					for k in response_2.json()['containedSpaces']:
+						if k['name'] == room:
+							return k['id']
+						else:
+							return 'wrong room or room invalid'
+				else:
+					return 'wrong group or group invalid'
+		else:
+			return 'invalid floor'
+
+def api_availability():
+	"""Check the api
+		
+		:return:	 bool or str
+	"""
+	#HTTP GET request
+	response = simple_get_request(fenix_api_space)
 
 	if "Serviço em Manutenção" in response.text:
 		return False
@@ -56,9 +91,9 @@ def get_room_week_data(day, room):
 
 		:param day:  str
 		:param room: str
-		:return:     dict or a string
+		:return:     dict or a str
 	"""
-	#HTTP GET request
+	#HTTP GET request 
 	try:
 		response = requests.get(fenix_api_space + rooms[room], \
 								params={'day': day}, timeout = 10)
