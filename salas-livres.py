@@ -161,10 +161,11 @@ contents = file.read()
 rooms = ast.literal_eval(contents)
 file.close()
 
-if not(api_availability()):
-	print("Api is unavalable")
-else:
-	now = datetime.now()
-	data = free_rooms(now)
-	for i in data.keys():
-		print(i, data[i])
+if __name__ == '__main__':
+	if not(api_availability()):
+		print("Api is unavalable")
+	else:
+		now = datetime.now()
+		data = free_rooms(now)
+		for i in data.keys():
+			print(i, data[i])
