@@ -12,18 +12,18 @@ import requests
 
 from datetime import datetime
 
-fenix_api = "https://fenix.tecnico.ulisboa.pt/api/fenix/v1/"
-fenix_api_space = fenix_api + "spaces/"
-fenix_api_space_Tagus_Park = fenix_api_space + "2448131365084"					#"2448131365084" is the id of the building TagusPark
+FENIX_API = "https://fenix.tecnico.ulisboa.pt/api/fenix/v1/"
+FENIX_API_SPACES = FENIX_API + "spaces/"
+FENIX_API_SPACES_TAGUS = FENIX_API_SPACES + "2448131365084"					#"2448131365084" is the id of the building TagusPark
 
-def simple_get_request(url):
+def get_request(url):
 	"""Simple get request
 		
 		:param url:  str
 		:return:	 HTTP response
 	"""
 	try:
-		response = requests.get(url, timeout=3)
+		response = requests.get(url, timeout=10)
 		response.raise_for_status()
 	except requests.exceptions.Timeout:
 		return str("The request timed out!")
@@ -44,13 +44,13 @@ def get_room_id(room, floor, group):
 		:return:	  str
 	"""
 	#HTTP GET request
-	response = simple_get_request(fenix_api_space_Tagus_Park)
+	response = get_request(FENIX_API_SPACES_TAGUS)
 	for i in response.json()['containedSpaces']:
 		if isinstance(floor, str) and i['name'] == floor:
-			response_1 = simple_get_request(fenix_api_space + i['id'])
+			response_1 = get_request(FENIX_API_SPACES + i['id'])
 			for j in response_1.json()['containedSpaces']:
 				if isinstance(group, str) and j['name'] == group:
-					response_2 = simple_get_request(fenix_api_space + j['id'])
+					response_2 = get_request(FENIX_API_SPACES + j['id'])
 					for k in response_2.json()['containedSpaces']:
 						if k['name'] == room:
 							return k['id']
@@ -67,7 +67,7 @@ def api_availability():
 		:return:	 bool or str
 	"""
 	#HTTP GET request
-	response = simple_get_request(fenix_api_space)
+	response = get_request(FENIX_API_SPACES)
 
 	if "Serviço em Manutenção" in response.text or isinstance(response, str):
 		return False
@@ -100,20 +100,8 @@ def get_room_week_data(day, room):
 		:param room: str
 		:return:     dict or a str
 	"""
-	#HTTP GET request 
-	try:
-		response = requests.get(fenix_api_space + rooms[room], \
-								params={'day': day}, timeout = 10)
-		response.raise_for_status()
-	except requests.exceptions.Timeout:
-		return str("The request timed out!")
-	except requests.exceptions.ConnectionError as errc:
-		return str(f"Error Connecting: {errc}")
-	except requests.exceptions.HTTPError as http_err:
-		return str(f"HTTP error occurred: {http_err}")
-	except requests.exceptions.RequestException as err:
-		return str(f"Other error occurred: {err}")
-
+	#HTTP GET request
+	response = get_request(FENIX_API_SPACES + rooms[room])
 	json_response = response.json()
 
 	if "error" in json_response: 
