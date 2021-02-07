@@ -101,7 +101,7 @@ def get_room_week_data(day, room):
 		:return:     dict or a str
 	"""
 	#HTTP GET request
-	response = get_request(FENIX_API_SPACES + rooms[room])
+	response = get_request(FENIX_API_SPACES + room)
 	json_response = response.json()
 
 	if "error" in json_response: 
@@ -112,11 +112,12 @@ def get_room_week_data(day, room):
 		room_week_data = clean_data_room(json_response["events"])
 		return room_week_data
 
-def free_rooms(date):
-	"""Get free rooms on a specific date
+def free_rooms(date, rooms):
+	"""Get free rooms from the rooms.txt on a specific date
 
-		:param date: datetime 
-		:return:     dict
+		:param date:  datetime
+		:param rooms: dict 
+		:return:      dict
 	"""
 
 	day = date.strftime("%d/%m/%Y")
@@ -125,7 +126,7 @@ def free_rooms(date):
 	results = { i: "" for i in rooms.keys()}
 
 	for room in rooms.keys():
-		week_schedule = get_room_week_data(day, room)
+		week_schedule = get_room_week_data(day, rooms[room])
 		if day in week_schedule:
 			free = True
 			for lesson in week_schedule[day]:
@@ -144,16 +145,16 @@ def free_rooms(date):
 			results[room] = ": Free all day or closed"
 	return results
 
-file = open("rooms.txt", "r")
-contents = file.read()
-rooms = ast.literal_eval(contents)
-file.close()
-
 if __name__ == '__main__':
 	if not(api_availability()):
 		print("Api is unavalable")
 	else:
+		file = open("rooms.txt", "r")
+		contents = file.read()
+		rooms = ast.literal_eval(contents)
+		file.close()
+
 		now = datetime.now()
-		data = free_rooms(now)
+		data = free_rooms(now, rooms)
 		for i in data.keys():
 			print(i, data[i])
