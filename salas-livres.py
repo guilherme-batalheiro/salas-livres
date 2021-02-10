@@ -74,59 +74,74 @@ def api_availability():
 	else:
 		return True
 
-def clean_data_room(data):
-	"""Clean the data
-		
-		:param data: dict
-		:return:	 dict
-	"""
-	clean_data = {}
+class room:
+	def __init__(self, name, r_id):
+		"""Inicia o objeto
+			
+			:param name:  str
+			:param r_id: str
+			:return:	 bool or str
 
-	for i in data:
-		if i["day"] not in clean_data:
-			clean_data[i["day"]] = [i["weekday"], {"type": i["type"], \
-										  		   "start": i["start"], \
-										  		   "end": i["end"]}]
+		"""
+
+		if isinstance(name, str) and isinstance(r_id, str):
+			if len(r_id) == 13 and r_id.isdecimal():
+				self.name = name
+				self.r_id = r_id
+			else:
+				raise ValueError("room: The room_id have to be valid have too be a string compost of 13 digits use the function get_room_id")	
 		else:
-			clean_data[i["day"]].append({"type": i["type"], \
-						 				 "start": i["start"], \
-						 				 "end": i["end"]})
-	return clean_data
+			raise ValueError("room: The parameters have to be str")
 
-def get_room_week_data(day, room):
-	"""Get room data
+	def get_room_week_data(self, day):
+		"""Get room data
 
-		:param day:  str
-		:param room: str
-		:return:     dict or a str
-	"""
-	#HTTP GET request
-	response = get_request(FENIX_API_SPACES + room)
-	json_response = response.json()
+			:param day:  str
+			:return:     dict or a str
+		"""
+		#HTTP GET request
 
-	if "error" in json_response: 
-		return str(json_response["error"] + ": " + json_response["description"])
-	elif "events" not in json_response:
-		return str(": No info :( sorry!!! or it is closed all week.")
-	else:
-		room_week_data = clean_data_room(json_response["events"])
-		return room_week_data
+		def clean_data_room(data):
+			"""Clean the data
+				
+				:param data: dict
+				:return:	 dict
+			"""
+			clean_data = {}
 
-def free_rooms(date, rooms):
-	"""Get free rooms from the rooms.txt on a specific date
+			for i in data:
+				if i["day"] not in clean_data:
+					clean_data[i["day"]] = [i["weekday"], {"type": i["type"], \
+												  		   "start": i["start"], \
+												  		   "end": i["end"]}]
+				else:
+					clean_data[i["day"]].append({"type": i["type"], \
+								 				 "start": i["start"], \
+								 				 "end": i["end"]})
+			return clean_data
+
+		response = get_request(FENIX_API_SPACES + self.r_id)
+		json_response = response.json()
+
+		if "error" in json_response: 
+			return str(json_response["error"] + ": " + json_response["description"])
+		elif "events" not in json_response:
+			return str(": No info :( sorry!!! or it is closed all week.")
+		else:
+			room_week_data = clean_data_room(json_response["events"])
+			return room_week_data
+
+	def free_room(self, date):
+		"""Get free rooms from the rooms.txt on a specific date
 
 		:param date:  datetime
 		:param rooms: dict 
 		:return:      dict
-	"""
+		"""
+		day = date.strftime("%d/%m/%Y")
+		time = datetime.strptime(date.strftime("%H:%M"), "%H:%M")
 
-	day = date.strftime("%d/%m/%Y")
-	time = datetime.strptime(date.strftime("%H:%M"), "%H:%M")
-
-	results = { i: "" for i in rooms.keys()}
-
-	for room in rooms.keys():
-		week_schedule = get_room_week_data(day, rooms[room])
+		week_schedule = self.get_room_week_data(day)
 		if day in week_schedule:
 			free = True
 			for lesson in week_schedule[day]:
@@ -135,15 +150,13 @@ def free_rooms(date, rooms):
 								 datetime.strptime(lesson["end"], "%H:%M")
 					if start <= time <= end:
 						free = False
-						results[room] = ": Room not free!"
-						break
+						return ": Room not free!"
 			if free:
-				results[room] = ": Room free!"
+				return ": Room free!"
 		elif isinstance(week_schedule, str):
-			results[room] = week_schedule
+			return week_schedule
 		else:
-			results[room] = ": Free all day or closed"
-	return results
+			return ": Free all day or closed"
 
 if __name__ == '__main__':
 	if not(api_availability()):
@@ -151,10 +164,14 @@ if __name__ == '__main__':
 	else:
 		file = open("rooms.txt", "r")
 		contents = file.read()
-		rooms = ast.literal_eval(contents)
+		rooms_txt = ast.literal_eval(contents)
 		file.close()
 
+		rooms_lst = []
+
+		for room_name in rooms_txt.keys():
+			rooms_lst.append(room(room_name, rooms_txt[room_name]))
+		
 		now = datetime.now()
-		data = free_rooms(now, rooms)
-		for i in data.keys():
-			print(i, data[i])
+		for room_obj in rooms_lst:
+			print(room_obj.name, room_obj.free_room(now))
