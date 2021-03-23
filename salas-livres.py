@@ -36,7 +36,8 @@ def get_request(url):
 	return response
 
 def get_room_id(room, floor, group):
-	"""Gets the room id
+	"""Gets the room id 
+		(this function is not used in the script)
 		
 		:param room:  str
 		:param floor: str
