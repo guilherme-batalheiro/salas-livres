@@ -94,7 +94,7 @@ class room:
 		else:
 			raise ValueError("room: The parameters have to be str")
 
-	def get_room_week_data(self, day):
+	def get_room_week_data(self):
 		"""Get room data
 
 			:param day:  str
@@ -142,7 +142,7 @@ class room:
 		day = date.strftime("%d/%m/%Y")
 		time = datetime.strptime(date.strftime("%H:%M"), "%H:%M")
 
-		week_schedule = self.get_room_week_data(day)
+		week_schedule = self.get_room_week_data()
 		if day in week_schedule:
 			free = True
 			for lesson in week_schedule[day]:
