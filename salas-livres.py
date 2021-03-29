@@ -168,11 +168,7 @@ if __name__ == '__main__':
 		rooms_txt = ast.literal_eval(contents)
 		file.close()
 
-		rooms_lst = []
+		now = datetime.now()
 
 		for room_name in rooms_txt.keys():
-			rooms_lst.append(room(room_name, rooms_txt[room_name]))
-		
-		now = datetime.now()
-		for room_obj in rooms_lst:
-			print(room_obj.name, room_obj.free_room(now))
+			print(room_name, room(room_name, rooms_txt[room_name]).free_room(now))
