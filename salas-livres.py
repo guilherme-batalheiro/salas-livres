@@ -151,13 +151,13 @@ class room:
 								 datetime.strptime(lesson["end"], "%H:%M")
 					if start <= time <= end:
 						free = False
-						return ": Room not free!"
+						return "Room not free!"
 			if free:
-				return ": Room free!"
+				return "Room free!"
 		elif isinstance(week_schedule, str):
 			return week_schedule
 		else:
-			return ": Free all day or closed"
+			return "Free all day or closed"
 
 if __name__ == '__main__':
 	if not(api_availability()):
@@ -171,4 +171,4 @@ if __name__ == '__main__':
 		now = datetime.now()
 
 		for room_name in rooms_txt.keys():
-			print(room_name, room(room_name, rooms_txt[room_name]).free_room(now))
+			print(room_name + " : " + room(room_name, rooms_txt[room_name]).free_room(now))
