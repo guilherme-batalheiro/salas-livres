@@ -75,7 +75,7 @@ def api_availability():
 	else:
 		return True
 
-class room:
+class Room:
 	def __init__(self, name, r_id):
 		"""Inicia o objeto
 			
@@ -171,4 +171,4 @@ if __name__ == '__main__':
 		now = datetime.now()
 
 		for room_name in rooms_txt.keys():
-			print(room_name + " : " + room(room_name, rooms_txt[room_name]).free_room(now))
+			print(room_name + " : " + Room(room_name, rooms_txt[room_name]).free_room(now))
