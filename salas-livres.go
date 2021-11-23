@@ -24,12 +24,8 @@ type Room struct {
 }
 
 func printAvailability(room Room) {
-	availabel, response := room.getAvailability()
-	if availabel {
-		println(response + " available")
-	} else {
-		println(response)
-	}
+	_, response := room.getAvailability()
+	println(room.name + ":" + response)
 }
 
 func (room Room) getAvailability() (bool, string) {
@@ -75,11 +71,11 @@ func (room Room) getAvailability() (bool, string) {
 			getSecondsFromString(x.Start) <= getSecondsFromString(currentDate.Format("15:04")) &&
 			getSecondsFromString(currentDate.Format("15:04")) <= getSecondsFromString(x.End) {
 
+			return false, "not available until " + x.End + " because of " + x.Type
 		}
-		return false, room.name + " not available until " + x.End + " because of " + x.Type
 	}
 
-	return true, room.name
+	return true, "available"
 }
 
 func APIAvailable() bool {
